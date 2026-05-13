@@ -43,10 +43,20 @@ public class RezervareController {
         // Salveaza rezervarea
         Rezervare salvata = rezervareRepository.save(rezervare);
 
-        // Trimite emailuri asincron
+        // Trimite emailuri
+        System.out.println(">>> Rezervare salvata: " + salvata.getId());
+        System.out.println(">>> Email turist: " + salvata.getEmail());
         new Thread(() -> {
-            emailService.trimiteNotificarePensiune(salvata);
-            emailService.trimiteConfirmareTurist(salvata, salvata.getEmail());
+            try {
+                System.out.println(">>> Trimit email catre pensiune...");
+                emailService.trimiteNotificarePensiune(salvata);
+                System.out.println(">>> Email pensiune trimis OK!");
+                emailService.trimiteConfirmareTurist(salvata, salvata.getEmail());
+                System.out.println(">>> Email turist trimis OK!");
+            } catch (Exception e) {
+                System.out.println(">>> EROARE EMAIL: " + e.getMessage());
+                e.printStackTrace();
+            }
         }).start();
 
         return ResponseEntity.ok(salvata);
@@ -82,17 +92,26 @@ public class RezervareController {
     // PUT /api/rezervari/{id}/status — schimba statusul
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Long id,
-                                      @RequestParam String status) {
+                                          @RequestParam String status) {
         return rezervareRepository.findById(id).map(r -> {
             r.setStatus(Rezervare.Status.valueOf(status.toUpperCase()));
             Rezervare salvata = rezervareRepository.save(r);
 
             // Trimite email dupa schimbarea statusului
             new Thread(() -> {
-                if (salvata.getStatus() == Rezervare.Status.CONFIRMATA) {
-                    emailService.trimiteConfirmareAdmin(salvata, salvata.getEmail());
-                } else if (salvata.getStatus() == Rezervare.Status.ANULATA) {
-                    emailService.trimiteAnulareAdmin(salvata, salvata.getEmail());
+                try {
+                    if (salvata.getStatus() == Rezervare.Status.CONFIRMATA) {
+                        System.out.println(">>> Trimit email confirmare catre: " + salvata.getEmail());
+                        emailService.trimiteConfirmareAdmin(salvata, salvata.getEmail());
+                        System.out.println(">>> Email confirmare trimis OK!");
+                    } else if (salvata.getStatus() == Rezervare.Status.ANULATA) {
+                        System.out.println(">>> Trimit email anulare catre: " + salvata.getEmail());
+                        emailService.trimiteAnulareAdmin(salvata, salvata.getEmail());
+                        System.out.println(">>> Email anulare trimis OK!");
+                    }
+                } catch (Exception e) {
+                    System.out.println(">>> EROARE EMAIL STATUS: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }).start();
 
