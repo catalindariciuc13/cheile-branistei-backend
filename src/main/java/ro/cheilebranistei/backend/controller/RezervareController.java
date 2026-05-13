@@ -44,8 +44,10 @@ public class RezervareController {
         Rezervare salvata = rezervareRepository.save(rezervare);
 
         // Trimite emailuri asincron
-        emailService.trimiteNotificarePensiune(salvata);
-        emailService.trimiteConfirmareTurist(salvata, salvata.getEmail());
+        new Thread(() -> {
+            emailService.trimiteNotificarePensiune(salvata);
+            emailService.trimiteConfirmareTurist(salvata, salvata.getEmail());
+        }).start();
 
         return ResponseEntity.ok(salvata);
     }
@@ -86,11 +88,13 @@ public class RezervareController {
             Rezervare salvata = rezervareRepository.save(r);
 
             // Trimite email dupa schimbarea statusului
-            if (salvata.getStatus() == Rezervare.Status.CONFIRMATA) {
-                emailService.trimiteConfirmareAdmin(salvata, salvata.getEmail());
-            } else if (salvata.getStatus() == Rezervare.Status.ANULATA) {
-                emailService.trimiteAnulareAdmin(salvata, salvata.getEmail());
-            }
+            new Thread(() -> {
+                if (salvata.getStatus() == Rezervare.Status.CONFIRMATA) {
+                    emailService.trimiteConfirmareAdmin(salvata, salvata.getEmail());
+                } else if (salvata.getStatus() == Rezervare.Status.ANULATA) {
+                    emailService.trimiteAnulareAdmin(salvata, salvata.getEmail());
+                }
+            }).start();
 
             return ResponseEntity.ok(salvata);
         }).orElse(ResponseEntity.notFound().build());
