@@ -82,10 +82,21 @@ public class RezervareController {
     // PUT /api/rezervari/{id}/status — schimba statusul
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Long id,
-                                          @RequestParam String status) {
+                                      @RequestParam String status) {
         return rezervareRepository.findById(id).map(r -> {
             r.setStatus(Rezervare.Status.valueOf(status.toUpperCase()));
-            return ResponseEntity.ok(rezervareRepository.save(r));
+            Rezervare salvata = rezervareRepository.save(r);
+
+            // Trimite email dupa schimbarea statusului
+            new Thread(() -> {
+                if (salvata.getStatus() == Rezervare.Status.CONFIRMATA) {
+                    emailService.trimiteConfirmareAdmin(salvata, salvata.getEmail());
+                } else if (salvata.getStatus() == Rezervare.Status.ANULATA) {
+                    emailService.trimiteAnulareAdmin(salvata, salvata.getEmail());
+                }
+            }).start();
+
+            return ResponseEntity.ok(salvata);
         }).orElse(ResponseEntity.notFound().build());
     }
 
