@@ -1,13 +1,18 @@
 package ro.cheilebranistei.backend.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import ro.cheilebranistei.backend.model.Rezervare;
 import jakarta.mail.internet.MimeMessage;
 
 @Service
 public class EmailService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     private final JavaMailSender mailSender;
     private static final String PENSIUNE_EMAIL = "cheilebranistei@gmail.com";
@@ -20,6 +25,7 @@ public class EmailService {
     // ============================================================
     // Email catre pensiune — rezervare noua
     // ============================================================
+    @Async
     public void trimiteNotificarePensiune(Rezervare r) {
         try {
             MimeMessage msg = mailSender.createMimeMessage();
@@ -28,14 +34,16 @@ public class EmailService {
             h.setSubject("Rezervare noua — " + r.getNume());
             h.setText(buildEmailPensiune(r), true);
             mailSender.send(msg);
+            log.info("Email notificare pensiune trimis pentru rezervarea id={}", r.getId());
         } catch (Exception e) {
-            System.err.println("Eroare trimitere email pensiune: " + e.getMessage());
+            log.error("Eroare trimitere email pensiune pentru rezervarea id={}: {}", r.getId(), e.getMessage(), e);
         }
     }
 
     // ============================================================
     // Email catre turist — confirmare rezervare noua
     // ============================================================
+    @Async
     public void trimiteConfirmareTurist(Rezervare r, String emailTurist) {
         if (emailTurist == null || emailTurist.isBlank()) return;
         try {
@@ -46,14 +54,16 @@ public class EmailService {
             h.setSubject("Rezervare primita — Cheile Branistei");
             h.setText(buildEmailTurist(r), true);
             mailSender.send(msg);
+            log.info("Email confirmare turist trimis la {} pentru rezervarea id={}", emailTurist, r.getId());
         } catch (Exception e) {
-            System.err.println("Eroare trimitere email turist: " + e.getMessage());
+            log.error("Eroare trimitere email turist la {} pentru rezervarea id={}: {}", emailTurist, r.getId(), e.getMessage(), e);
         }
     }
 
     // ============================================================
     // Email catre turist — confirmare din panoul admin
     // ============================================================
+    @Async
     public void trimiteConfirmareAdmin(Rezervare r, String emailTurist) {
         if (emailTurist == null || emailTurist.isBlank()) return;
         try {
@@ -64,14 +74,16 @@ public class EmailService {
             h.setSubject("Rezervarea ta a fost confirmata!");
             h.setText(buildEmailConfirmareAdmin(r), true);
             mailSender.send(msg);
+            log.info("Email confirmare admin trimis la {} pentru rezervarea id={}", emailTurist, r.getId());
         } catch (Exception e) {
-            System.err.println("Eroare email confirmare admin: " + e.getMessage());
+            log.error("Eroare email confirmare admin la {} pentru rezervarea id={}: {}", emailTurist, r.getId(), e.getMessage(), e);
         }
     }
 
     // ============================================================
     // Email catre turist — anulare din panoul admin
     // ============================================================
+    @Async
     public void trimiteAnulareAdmin(Rezervare r, String emailTurist) {
         if (emailTurist == null || emailTurist.isBlank()) return;
         try {
@@ -82,8 +94,9 @@ public class EmailService {
             h.setSubject("Rezervarea ta a fost anulata");
             h.setText(buildEmailAnulareAdmin(r), true);
             mailSender.send(msg);
+            log.info("Email anulare admin trimis la {} pentru rezervarea id={}", emailTurist, r.getId());
         } catch (Exception e) {
-            System.err.println("Eroare email anulare admin: " + e.getMessage());
+            log.error("Eroare email anulare admin la {} pentru rezervarea id={}: {}", emailTurist, r.getId(), e.getMessage(), e);
         }
     }
 
