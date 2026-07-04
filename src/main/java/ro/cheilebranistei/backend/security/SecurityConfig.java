@@ -21,7 +21,7 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    @Value("${allowed.origins}")
+    @Value("${allowed.origins:https://cheilebranistei.ro,https://www.cheilebranistei.ro,https://cheilebranistei.netlify.app}")
     private String allowedOrigins;
 
     private final JwtAuthFilter jwtAuthFilter;
