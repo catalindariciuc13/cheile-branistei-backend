@@ -128,7 +128,7 @@ public class RezervareController {
 
         // Campurile pe care clientul nu are voie sa le controleze
         rezervare.setId(null);
-        rezervare.setDataCreare(LocalDateTime.now());
+        rezervare.setDataCreare(LocalDateTime.now(java.time.ZoneId.of("Europe/Bucharest")));
         if (!admin) {
             rezervare.setStatus(Rezervare.Status.PENDING);
         }

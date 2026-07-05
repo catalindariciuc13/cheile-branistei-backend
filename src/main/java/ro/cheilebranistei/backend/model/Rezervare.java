@@ -3,6 +3,7 @@ package ro.cheilebranistei.backend.model;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @Entity
 @Table(name = "rezervari")
@@ -36,7 +37,7 @@ public class Rezervare {
     private Status status = Status.PENDING;
 
     @Column(name = "data_creare")
-    private LocalDateTime dataCreare = LocalDateTime.now();
+    private LocalDateTime dataCreare = LocalDateTime.now(ZoneId.of("Europe/Bucharest"));
 
     public enum Status {
         PENDING, CONFIRMATA, ANULATA, BLOCAT
