@@ -196,6 +196,43 @@ public class RezervareController {
         }
     }
 
+    // GET /api/rezervari/calendar — camere libere pe fiecare zi (public, fara date personale)
+    @GetMapping("/calendar")
+    public ResponseEntity<?> getCalendar(
+            @RequestParam(required = false) String start,
+            @RequestParam(defaultValue = "120") int zile) {
+        LocalDate inceput;
+        try {
+            inceput = (start == null || start.isBlank()) ? LocalDate.now() : LocalDate.parse(start);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("eroare", "Data de start invalidă."));
+        }
+        zile = Math.min(Math.max(zile, 1), 190);
+        LocalDate sfarsit = inceput.plusDays(zile);
+
+        List<Rezervare> active = rezervareRepository
+            .findByStatusNotAndDataCheckinLessThanAndDataCheckoutGreaterThan(
+                Rezervare.Status.ANULATA, sfarsit, inceput);
+
+        Map<String, Integer> libere = new java.util.LinkedHashMap<>();
+        for (LocalDate zi = inceput; zi.isBefore(sfarsit); zi = zi.plusDays(1)) {
+            final LocalDate z = zi;
+            int ocupate = active.stream()
+                .filter(r -> !r.getDataCheckin().isAfter(z) && r.getDataCheckout().isAfter(z))
+                .mapToInt(r -> (int) Math.ceil(r.getNrPersoane() / 2.0))
+                .sum();
+            libere.put(z.toString(), Math.max(0, 7 - ocupate));
+        }
+
+        return ResponseEntity.ok(Map.of(
+            "start", inceput.toString(),
+            "zile", zile,
+            "camereTotal", 7,
+            "pretCamera", 250,
+            "libere", libere
+        ));
+    }
+
     // PUT /api/rezervari/{id}/status — schimba statusul
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Long id,

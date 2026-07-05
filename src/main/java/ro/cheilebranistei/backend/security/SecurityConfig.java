@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/rezervari").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/rezervari/disponibilitate").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/rezervari/calendar").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -19,4 +19,8 @@ public interface RezervareRepository extends JpaRepository<Rezervare, Long> {
            nativeQuery = true)
     Integer getCamereOcupate(@Param("checkin") LocalDate checkin,
                               @Param("checkout") LocalDate checkout);
+
+    // Rezervarile active (ne-anulate) care se suprapun cu perioada data
+    List<Rezervare> findByStatusNotAndDataCheckinLessThanAndDataCheckoutGreaterThan(
+            Rezervare.Status status, LocalDate checkout, LocalDate checkin);
 }
