@@ -42,6 +42,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/rezervari").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/rezervari/disponibilitate").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/rezervari/calendar").permitAll()
+                // HEAD e folosit de serviciile de monitorizare (UptimeRobot)
+                .requestMatchers(HttpMethod.HEAD, "/api/rezervari/disponibilitate").permitAll()
+                .requestMatchers(HttpMethod.HEAD, "/api/rezervari/calendar").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
