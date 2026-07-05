@@ -15,6 +15,10 @@ public class EmailService {
     @Value("${resend.api.key}")
     private String resendApiKey;
 
+    // Link-ul de recenzie Google; poate fi suprascris cu REVIEW_LINK pe Railway
+    @Value("${review.link:https://maps.app.goo.gl/fGCbCsRtcbRnctTH8}")
+    private String reviewLink;
+
     private static final String PENSIUNE_EMAIL = "rezervari@cheilebranistei.ro";
     private static final String PENSIUNE_NUME  = "Cheile Branistei Mountain Retreat";
     private static final String NOTIFICARI_EMAIL = "cheilebranistei@gmail.com";
@@ -178,5 +182,40 @@ public class EmailService {
              + "</div>";
 
         trimiteEmail(emailTurist, "Rezervarea ta a fost anulata - Cheile Branistei", html);
+    }
+
+    // ============================================================
+    // Email catre turist — cerere de recenzie dupa sejur
+    // ============================================================
+    public void trimiteCerereRecenzie(Rezervare r) {
+        if (r.getEmail() == null || r.getEmail().isBlank()) return;
+
+        String html = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>"
+             + "<div style='background:#102a21;padding:24px;text-align:center;border-radius:8px 8px 0 0;'>"
+             +   "<h1 style='color:#d6b36a;margin:0;font-size:22px;'>Cheile Branistei</h1>"
+             +   "<p style='color:rgba(255,255,255,0.8);margin:8px 0 0;font-size:14px;'>Mountain Retreat - Bucovina</p>"
+             + "</div>"
+             + "<div style='background:#f9f9f9;padding:28px;border-radius:0 0 8px 8px;'>"
+             +   "<h2 style='color:#102a21;margin:0 0 16px;'>Multumim ca ai fost oaspetele nostru!</h2>"
+             +   "<p style='color:#444;line-height:1.6;'>Buna, <strong>" + r.getNume() + "</strong>!</p>"
+             +   "<p style='color:#444;line-height:1.6;'>Speram ca sejurul tau la Cheile Branistei a fost exact "
+             +     "linistea de care aveai nevoie. Muntele, raul si foisorul iti raman mereu deschise.</p>"
+             +   "<p style='color:#444;line-height:1.6;'>Daca ti-a placut, ne-ai ajuta enorm cu o recenzie pe Google "
+             +     "- dureaza un minut si ajuta alti calatori sa ne descopere.</p>"
+             +   "<div style='text-align:center;margin:26px 0;'>"
+             +     "<a href='" + reviewLink + "' "
+             +       "style='display:inline-block;background:#d6b36a;color:#102a21;font-weight:bold;"
+             +       "padding:13px 30px;border-radius:999px;text-decoration:none;font-size:15px;'>"
+             +       "Lasa o recenzie"
+             +     "</a>"
+             +   "</div>"
+             +   "<p style='color:#444;line-height:1.6;'>Te mai asteptam cu drag!</p>"
+             +   "<div style='margin-top:24px;padding-top:20px;border-top:1px solid #e0e0e0;text-align:center;color:#888;font-size:12px;'>"
+             +     "Cheile Branistei Mountain Retreat - Branistea, jud. Suceava"
+             +   "</div>"
+             + "</div>"
+             + "</div>";
+
+        trimiteEmail(r.getEmail(), "Cum a fost la Cheile Branistei?", html);
     }
 }

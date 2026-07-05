@@ -23,4 +23,7 @@ public interface RezervareRepository extends JpaRepository<Rezervare, Long> {
     // Rezervarile active (ne-anulate) care se suprapun cu perioada data
     List<Rezervare> findByStatusNotAndDataCheckinLessThanAndDataCheckoutGreaterThan(
             Rezervare.Status status, LocalDate checkout, LocalDate checkin);
+
+    // Rezervarile confirmate cu check-out la o data anume (pentru cererea de recenzie)
+    List<Rezervare> findByStatusAndDataCheckout(Rezervare.Status status, LocalDate dataCheckout);
 }
