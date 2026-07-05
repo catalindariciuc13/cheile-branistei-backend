@@ -54,4 +54,15 @@ public class PushController {
 
         return ResponseEntity.ok(Map.of("ok", true));
     }
+
+    // POST /api/push/dezaboneaza — sterge abonamentul dispozitivului
+    @PostMapping("/dezaboneaza")
+    public ResponseEntity<?> dezaboneaza(@RequestBody Map<String, Object> body) {
+        String endpoint = (String) body.get("endpoint");
+        if (endpoint == null || endpoint.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("eroare", "Endpoint lipsă."));
+        }
+        abonamente.findByEndpoint(endpoint).ifPresent(abonamente::delete);
+        return ResponseEntity.ok(Map.of("ok", true));
+    }
 }
