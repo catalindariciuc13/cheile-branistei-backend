@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ro.cheilebranistei.backend.model.Rezervare;
 import ro.cheilebranistei.backend.repository.RezervareRepository;
 import ro.cheilebranistei.backend.service.EmailService;
+import ro.cheilebranistei.backend.service.PushService;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,11 +30,14 @@ public class RezervareController {
 
     private final RezervareRepository rezervareRepository;
     private final EmailService        emailService;
+    private final PushService         pushService;
 
     public RezervareController(RezervareRepository rezervareRepository,
-                               EmailService emailService) {
+                               EmailService emailService,
+                               PushService pushService) {
         this.rezervareRepository = rezervareRepository;
         this.emailService        = emailService;
+        this.pushService         = pushService;
     }
 
     private static boolean esteAdmin() {
@@ -150,11 +154,18 @@ public class RezervareController {
         // Salveaza rezervarea
         Rezervare salvata = rezervareRepository.save(rezervare);
 
-        // Trimite emailuri
+        // Trimite emailuri + notificare push catre admin
         System.out.println(">>> Rezervare salvata: " + salvata.getId());
         System.out.println(">>> Email turist: " + salvata.getEmail());
+        final boolean creataDeAdmin = admin;
         new Thread(() -> {
             try {
+                if (!creataDeAdmin) {
+                    pushService.trimiteTuturor(
+                        "Rezervare nouă — " + salvata.getNume(),
+                        salvata.getDataCheckin() + " → " + salvata.getDataCheckout()
+                            + " · " + salvata.getNrPersoane() + " persoane · " + salvata.getTelefon());
+                }
                 System.out.println(">>> Trimit email catre pensiune...");
                 emailService.trimiteNotificarePensiune(salvata);
                 System.out.println(">>> Email pensiune trimis OK!");

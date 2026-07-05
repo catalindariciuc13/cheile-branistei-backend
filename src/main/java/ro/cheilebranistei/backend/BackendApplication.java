@@ -15,6 +15,40 @@ public class BackendApplication {
             System.out.println(new BCryptPasswordEncoder().encode(args[0].substring("--hash=".length())));
             return;
         }
+        // Utilitar local: genereaza perechea de chei VAPID pentru Web Push.
+        // Rulare: ./mvnw spring-boot:run -Dspring-boot.run.arguments="--vapid"
+        if (args.length > 0 && args[0].equals("--vapid")) {
+            try {
+                java.security.KeyPairGenerator g = java.security.KeyPairGenerator.getInstance("EC");
+                g.initialize(new java.security.spec.ECGenParameterSpec("secp256r1"));
+                java.security.KeyPair kp = g.generateKeyPair();
+                java.security.interfaces.ECPublicKey pub = (java.security.interfaces.ECPublicKey) kp.getPublic();
+                java.security.interfaces.ECPrivateKey priv = (java.security.interfaces.ECPrivateKey) kp.getPrivate();
+                byte[] x = la32(pub.getW().getAffineX().toByteArray());
+                byte[] y = la32(pub.getW().getAffineY().toByteArray());
+                byte[] punct = new byte[65];
+                punct[0] = 4;
+                System.arraycopy(x, 0, punct, 1, 32);
+                System.arraycopy(y, 0, punct, 33, 32);
+                java.util.Base64.Encoder enc = java.util.Base64.getUrlEncoder().withoutPadding();
+                System.out.println("VAPID_PUBLIC_KEY=" + enc.encodeToString(punct));
+                System.out.println("VAPID_PRIVATE_KEY=" + enc.encodeToString(la32(priv.getS().toByteArray())));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
         SpringApplication.run(BackendApplication.class, args);
+    }
+
+    // Normalizeaza un BigInteger la exact 32 de octeti (taie zeroul de semn / completeaza la stanga)
+    private static byte[] la32(byte[] b) {
+        byte[] out = new byte[32];
+        if (b.length >= 32) {
+            System.arraycopy(b, b.length - 32, out, 0, 32);
+        } else {
+            System.arraycopy(b, 0, out, 32 - b.length, b.length);
+        }
+        return out;
     }
 }
