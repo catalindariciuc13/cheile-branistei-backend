@@ -174,6 +174,10 @@ public class EmailService {
              +   "<p style='color:#444;line-height:1.6;'>Buna, <strong>" + r.getNume() + "</strong>!</p>"
              +   "<p style='color:#444;line-height:1.6;'>Ne pare rau sa te informam ca rezervarea ta pentru perioada "
              +     "<strong>" + r.getDataCheckin() + " - " + r.getDataCheckout() + "</strong> a fost anulata.</p>"
+             +   (r.getMotivAnulare() != null
+                    ? "<div style='background:white;border-left:4px solid #d6b36a;border-radius:6px;padding:14px 16px;margin:16px 0;color:#444;line-height:1.6;'>"
+                      + "<strong>Motivul anularii:</strong> " + r.getMotivAnulare() + "</div>"
+                    : "")
              +   "<p style='color:#444;line-height:1.6;'>Pentru mai multe detalii sau o noua rezervare ne poti contacta la:</p>"
              +   "<p style='margin:4px 0;'><strong>Tel:</strong> 0733 623 000</p>"
              +   "<p style='margin:4px 0;'><strong>Email:</strong> cheilebranistei@gmail.com</p>"

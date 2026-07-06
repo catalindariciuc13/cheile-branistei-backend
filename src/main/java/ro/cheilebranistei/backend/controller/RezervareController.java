@@ -247,9 +247,18 @@ public class RezervareController {
     // PUT /api/rezervari/{id}/status — schimba statusul
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateStatus(@PathVariable Long id,
-                                          @RequestParam String status) {
+                                          @RequestParam String status,
+                                          @RequestParam(required = false) String motiv) {
         return rezervareRepository.findById(id).map(r -> {
             r.setStatus(Rezervare.Status.valueOf(status.toUpperCase()));
+            if (r.getStatus() == Rezervare.Status.ANULATA) {
+                String m = motiv == null ? "" : motiv.trim();
+                if (m.length() > 500) m = m.substring(0, 500);
+                r.setMotivAnulare(m.isEmpty() ? null : m);
+            } else {
+                // La reactivare/confirmare, motivul unei anulari vechi nu mai e relevant
+                r.setMotivAnulare(null);
+            }
             Rezervare salvata = rezervareRepository.save(r);
 
             // Trimite email dupa schimbarea statusului

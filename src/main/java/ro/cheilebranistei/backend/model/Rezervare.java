@@ -33,6 +33,9 @@ public class Rezervare {
     @Column(columnDefinition = "TEXT")
     private String mesaj;
 
+    @Column(name = "motiv_anulare", length = 500)
+    private String motivAnulare;
+
     @Enumerated(EnumType.STRING)
     private Status status = Status.PENDING;
 
@@ -67,6 +70,9 @@ public class Rezervare {
 
     public String getMesaj() { return mesaj; }
     public void setMesaj(String mesaj) { this.mesaj = mesaj; }
+
+    public String getMotivAnulare() { return motivAnulare; }
+    public void setMotivAnulare(String motivAnulare) { this.motivAnulare = motivAnulare; }
 
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
