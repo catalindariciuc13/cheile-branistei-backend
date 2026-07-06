@@ -23,6 +23,11 @@ public class EmailService {
     private static final String PENSIUNE_NUME  = "Cheile Branistei Mountain Retreat";
     private static final String NOTIFICARI_EMAIL = "cheilebranistei@gmail.com";
 
+    // Adresa pentru rapoartele automate (backup + rezumat saptamanal);
+    // poate fi schimbata cu variabila RAPOARTE_EMAIL pe Railway
+    @Value("${rapoarte.email:catalindariciuc@yahoo.com}")
+    private String rapoarteEmail;
+
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     // ============================================================
@@ -212,7 +217,7 @@ public class EmailService {
              +     "a intregului istoric de rezervari. Se trimite automat in fiecare duminica seara.</p>"
              + "</div>"
              + "</div>";
-        trimiteEmail(NOTIFICARI_EMAIL, "Backup rezervari - Cheile Branistei", html, numeFisier, csvBase64);
+        trimiteEmail(rapoarteEmail, "Backup rezervari - Cheile Branistei", html, numeFisier, csvBase64);
     }
 
     // ============================================================
@@ -227,7 +232,7 @@ public class EmailService {
              +   corpHtml
              + "</div>"
              + "</div>";
-        trimiteEmail(NOTIFICARI_EMAIL, "Saptamana ta la pensiune - rezumat", html);
+        trimiteEmail(rapoarteEmail, "Saptamana ta la pensiune - rezumat", html);
     }
 
     // ============================================================
