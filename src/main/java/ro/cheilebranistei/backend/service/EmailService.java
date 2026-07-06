@@ -29,12 +29,21 @@ public class EmailService {
     // Metoda generica de trimitere email via Resend API
     // ============================================================
     private void trimiteEmail(String catre, String subiect, String html) {
+        trimiteEmail(catre, subiect, html, null, null);
+    }
+
+    void trimiteEmail(String catre, String subiect, String html,
+                      String numeFisier, String continutBase64) {
         try {
+            String atasament = (numeFisier != null && continutBase64 != null)
+                ? ",\"attachments\":[{\"filename\":\"" + numeFisier + "\",\"content\":\"" + continutBase64 + "\"}]"
+                : "";
             String body = "{"
                 + "\"from\":\"" + PENSIUNE_NUME + " <" + PENSIUNE_EMAIL + ">\","
                 + "\"to\":[\"" + catre + "\"],"
                 + "\"subject\":\"" + subiect + "\","
                 + "\"html\":\"" + html.replace("\"", "\\\"").replace("\n", "").replace("\r", "") + "\""
+                + atasament
                 + "}";
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -186,6 +195,39 @@ public class EmailService {
              + "</div>";
 
         trimiteEmail(emailTurist, "Rezervarea ta a fost anulata - Cheile Branistei", html);
+    }
+
+    // ============================================================
+    // Email catre pensiune — backup saptamanal CSV
+    // ============================================================
+    public void trimiteBackupSaptamanal(String numeFisier, String csvBase64, int numarRezervari) {
+        String html = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>"
+             + "<div style='background:#102a21;padding:24px;text-align:center;border-radius:8px 8px 0 0;'>"
+             +   "<h1 style='color:#d6b36a;margin:0;font-size:22px;'>Backup saptamanal</h1>"
+             + "</div>"
+             + "<div style='background:#f9f9f9;padding:28px;border-radius:0 0 8px 8px;'>"
+             +   "<p style='color:#444;line-height:1.6;'>In atasament: toate cele <strong>" + numarRezervari
+             +     "</strong> rezervari din baza de date, in format CSV (se deschide cu Excel).</p>"
+             +   "<p style='color:#888;font-size:13px;line-height:1.6;'>Pastreaza emailul - e plasa de siguranta "
+             +     "a intregului istoric de rezervari. Se trimite automat in fiecare duminica seara.</p>"
+             + "</div>"
+             + "</div>";
+        trimiteEmail(NOTIFICARI_EMAIL, "Backup rezervari - Cheile Branistei", html, numeFisier, csvBase64);
+    }
+
+    // ============================================================
+    // Email catre pensiune — rezumatul saptamanii
+    // ============================================================
+    public void trimiteRezumatSaptamanal(String corpHtml) {
+        String html = "<div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>"
+             + "<div style='background:#102a21;padding:24px;text-align:center;border-radius:8px 8px 0 0;'>"
+             +   "<h1 style='color:#d6b36a;margin:0;font-size:22px;'>Saptamana la Cheile Branistei</h1>"
+             + "</div>"
+             + "<div style='background:#f9f9f9;padding:28px;border-radius:0 0 8px 8px;'>"
+             +   corpHtml
+             + "</div>"
+             + "</div>";
+        trimiteEmail(NOTIFICARI_EMAIL, "Saptamana ta la pensiune - rezumat", html);
     }
 
     // ============================================================
