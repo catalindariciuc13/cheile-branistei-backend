@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import ro.cheilebranistei.backend.model.Rezervare;
+import ro.cheilebranistei.backend.repository.CheckinOaspeteRepository;
 import ro.cheilebranistei.backend.repository.RezervareRepository;
 import ro.cheilebranistei.backend.service.EmailService;
 import ro.cheilebranistei.backend.service.PushService;
@@ -28,14 +29,17 @@ public class RezervareController {
 
     private final ConcurrentHashMap<String, ArrayDeque<Long>> cereriPerIp = new ConcurrentHashMap<>();
 
-    private final RezervareRepository rezervareRepository;
-    private final EmailService        emailService;
-    private final PushService         pushService;
+    private final RezervareRepository        rezervareRepository;
+    private final CheckinOaspeteRepository   checkinRepository;
+    private final EmailService               emailService;
+    private final PushService                pushService;
 
     public RezervareController(RezervareRepository rezervareRepository,
+                               CheckinOaspeteRepository checkinRepository,
                                EmailService emailService,
                                PushService pushService) {
         this.rezervareRepository = rezervareRepository;
+        this.checkinRepository   = checkinRepository;
         this.emailService        = emailService;
         this.pushService         = pushService;
     }
@@ -287,6 +291,7 @@ public class RezervareController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> sterge(@PathVariable Long id) {
         return rezervareRepository.findById(id).map(r -> {
+            checkinRepository.deleteAll(checkinRepository.findByRezervareId(id));
             rezervareRepository.delete(r);
             return ResponseEntity.ok().build();
         }).orElse(ResponseEntity.notFound().build());

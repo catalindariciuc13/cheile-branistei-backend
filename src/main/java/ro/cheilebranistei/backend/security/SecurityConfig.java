@@ -45,6 +45,11 @@ public class SecurityConfig {
                 // HEAD e folosit de serviciile de monitorizare (UptimeRobot)
                 .requestMatchers(HttpMethod.HEAD, "/api/rezervari/disponibilitate").permitAll()
                 .requestMatchers(HttpMethod.HEAD, "/api/rezervari/calendar").permitAll()
+                // Fluxul public de check-in (token-gated); rutele admin (genereaza-link,
+                // lista pe rezervare, dezvaluie) raman sub anyRequest().authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/checkin/rezervare").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/checkin/cauta").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/checkin/*").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

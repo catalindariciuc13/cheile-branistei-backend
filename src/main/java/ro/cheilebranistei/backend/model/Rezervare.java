@@ -36,6 +36,12 @@ public class Rezervare {
     @Column(name = "motiv_anulare", length = 500)
     private String motivAnulare;
 
+    @Column(name = "checkin_token", length = 64)
+    private String checkinToken;
+
+    @Column(name = "checkin_token_expira")
+    private LocalDateTime checkinTokenExpira;
+
     @Enumerated(EnumType.STRING)
     private Status status = Status.PENDING;
 
@@ -73,6 +79,12 @@ public class Rezervare {
 
     public String getMotivAnulare() { return motivAnulare; }
     public void setMotivAnulare(String motivAnulare) { this.motivAnulare = motivAnulare; }
+
+    public String getCheckinToken() { return checkinToken; }
+    public void setCheckinToken(String checkinToken) { this.checkinToken = checkinToken; }
+
+    public LocalDateTime getCheckinTokenExpira() { return checkinTokenExpira; }
+    public void setCheckinTokenExpira(LocalDateTime checkinTokenExpira) { this.checkinTokenExpira = checkinTokenExpira; }
 
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }

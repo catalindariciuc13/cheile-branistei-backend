@@ -1,8 +1,11 @@
 package ro.cheilebranistei.backend.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import ro.cheilebranistei.backend.model.CheckinOaspete;
 import ro.cheilebranistei.backend.model.Rezervare;
+import ro.cheilebranistei.backend.repository.CheckinOaspeteRepository;
 import ro.cheilebranistei.backend.repository.RezervareRepository;
 
 import java.nio.charset.StandardCharsets;
@@ -24,13 +27,36 @@ public class RapoarteScheduler {
 
     private static final ZoneId RO = ZoneId.of("Europe/Bucharest");
 
-    private final RezervareRepository rezervareRepository;
-    private final EmailService        emailService;
+    private final RezervareRepository       rezervareRepository;
+    private final CheckinOaspeteRepository  checkinRepository;
+    private final EmailService              emailService;
+
+    @Value("${checkin.retentie.ani:3}")
+    private int retentieAni;
 
     public RapoarteScheduler(RezervareRepository rezervareRepository,
+                             CheckinOaspeteRepository checkinRepository,
                              EmailService emailService) {
         this.rezervareRepository = rezervareRepository;
+        this.checkinRepository   = checkinRepository;
         this.emailService        = emailService;
+    }
+
+    // ============================================================
+    // Stergerea automata a datelor de check-in expirate (CNP, CI,
+    // domiciliu) dupa perioada de retentie legala - implicit 3 ani.
+    // Ruleaza in prima zi a fiecarei luni, la 03:00.
+    // ============================================================
+    @Scheduled(cron = "${checkin.retentie.cron:0 0 3 1 * *}", zone = "Europe/Bucharest")
+    public void stergeCheckinExpirat() {
+        LocalDate limita = LocalDate.now(RO).minusYears(retentieAni);
+        List<CheckinOaspete> vechi = checkinRepository
+            .findByDataCreareBefore(limita.atStartOfDay());
+        if (!vechi.isEmpty()) {
+            checkinRepository.deleteAll(vechi);
+            System.out.println(">>> Check-in: sterse " + vechi.size()
+                + " inregistrari mai vechi de " + retentieAni + " ani");
+        }
     }
 
     // ============================================================

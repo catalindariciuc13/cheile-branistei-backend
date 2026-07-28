@@ -38,6 +38,19 @@ public class BackendApplication {
             }
             return;
         }
+        // Utilitar local: genereaza cheia AES-256 pentru criptarea datelor de check-in.
+        // Rulare: ./mvnw spring-boot:run -Dspring-boot.run.arguments="--enckey"
+        if (args.length > 0 && args[0].equals("--enckey")) {
+            try {
+                javax.crypto.KeyGenerator gen = javax.crypto.KeyGenerator.getInstance("AES");
+                gen.init(256);
+                byte[] cheie = gen.generateKey().getEncoded();
+                System.out.println("CHECKIN_ENC_KEY=" + java.util.Base64.getEncoder().encodeToString(cheie));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
         SpringApplication.run(BackendApplication.class, args);
     }
 
