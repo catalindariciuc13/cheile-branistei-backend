@@ -138,6 +138,14 @@ public class CheckinController {
                 "Nu am găsit nicio rezervare cu acest telefon. Te rugăm să te adresezi recepției."));
         }
 
+        // Odata completata fisa, cautarea publica pe telefon nu mai regenereaza acces -
+        // altfel oricine stie numarul de telefon ar putea redeschide si retrimite date
+        // peste o fisa deja existenta. Corectiile se fac doar din admin (link nou trimis manual).
+        if (!checkinRepository.findByRezervareId(gasita.getId()).isEmpty()) {
+            return ResponseEntity.status(409).body(Map.of("eroare",
+                "Fișa de cazare a fost deja completată pentru această rezervare. Pentru corecții, adresează-te recepției."));
+        }
+
         LocalDateTime acum = LocalDateTime.now(RO);
         boolean valid = gasita.getCheckinToken() != null
             && gasita.getCheckinTokenExpira() != null
