@@ -93,13 +93,14 @@ public class CheckinController {
         if (r == null) {
             return ResponseEntity.status(404).body(Map.of("eroare", "Link invalid sau expirat."));
         }
-        return ResponseEntity.ok(Map.of(
-            "nume", r.getNume(),
-            "dataCheckin", r.getDataCheckin().toString(),
-            "dataCheckout", r.getDataCheckout().toString(),
-            "nrPersoane", r.getNrPersoane(),
-            "telefon", r.getTelefon()
-        ));
+        Map<String, Object> raspuns = new java.util.HashMap<>();
+        raspuns.put("nume", r.getNume());
+        raspuns.put("dataCheckin", r.getDataCheckin().toString());
+        raspuns.put("dataCheckout", r.getDataCheckout().toString());
+        raspuns.put("nrPersoane", r.getNrPersoane());
+        raspuns.put("telefon", r.getTelefon());
+        raspuns.put("email", r.getEmail() != null ? r.getEmail() : "");
+        return ResponseEntity.ok(raspuns);
     }
 
     private Rezervare gasesteValid(String token) {
@@ -152,8 +153,9 @@ public class CheckinController {
     // ============================================================
     // PUBLIC — trimiterea fisei completate (una sau mai multe persoane)
     // ============================================================
+    @SuppressWarnings("unchecked")
     @PostMapping("/{token}")
-    public ResponseEntity<?> trimite(@PathVariable String token, @RequestBody List<Map<String, String>> persoane,
+    public ResponseEntity<?> trimite(@PathVariable String token, @RequestBody Map<String, Object> body,
                                      HttpServletRequest request) {
         if (pesteLimita(request.getRemoteAddr())) {
             return ResponseEntity.status(429).body(Map.of("eroare", "Prea multe încercări. Adresează-te recepției."));
@@ -165,6 +167,16 @@ public class CheckinController {
         if (r == null) {
             return ResponseEntity.status(404).body(Map.of("eroare", "Link invalid sau expirat."));
         }
+
+        String email = curata((String) body.get("email"), 150);
+        if (email.isEmpty() || !email.matches("[^@\\s]+@[^@\\s]+\\.[^@\\s]+")) {
+            return ResponseEntity.badRequest().body(Map.of("eroare",
+                "Adresa de email este obligatorie (necesară pentru emiterea facturii)."));
+        }
+
+        Object persoaneObj = body.get("persoane");
+        List<Map<String, String>> persoane = persoaneObj instanceof List
+            ? (List<Map<String, String>>) persoaneObj : null;
         if (persoane == null || persoane.isEmpty() || persoane.size() > 20) {
             return ResponseEntity.badRequest().body(Map.of("eroare", "Date invalide."));
         }
@@ -190,6 +202,8 @@ public class CheckinController {
             checkinRepository.save(o);
         }
 
+        // Emailul din fisa devine emailul oficial al rezervarii (necesar pentru factura)
+        r.setEmail(email);
         // Link-ul e de unica folosinta odata completat
         r.setCheckinTokenExpira(LocalDateTime.now(RO).minusSeconds(1));
         rezervareRepository.save(r);
