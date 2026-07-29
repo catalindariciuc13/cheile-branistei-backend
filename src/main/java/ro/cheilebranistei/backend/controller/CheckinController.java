@@ -8,6 +8,7 @@ import ro.cheilebranistei.backend.model.Rezervare;
 import ro.cheilebranistei.backend.repository.CheckinOaspeteRepository;
 import ro.cheilebranistei.backend.repository.RezervareRepository;
 import ro.cheilebranistei.backend.service.CriptareService;
+import ro.cheilebranistei.backend.service.PushService;
 
 import java.security.SecureRandom;
 import java.time.Instant;
@@ -47,13 +48,16 @@ public class CheckinController {
     private final RezervareRepository       rezervareRepository;
     private final CheckinOaspeteRepository  checkinRepository;
     private final CriptareService           criptare;
+    private final PushService               pushService;
 
     public CheckinController(RezervareRepository rezervareRepository,
                              CheckinOaspeteRepository checkinRepository,
-                             CriptareService criptare) {
+                             CriptareService criptare,
+                             PushService pushService) {
         this.rezervareRepository = rezervareRepository;
         this.checkinRepository   = checkinRepository;
         this.criptare            = criptare;
+        this.pushService         = pushService;
     }
 
     private static String genereazaToken() {
@@ -215,6 +219,13 @@ public class CheckinController {
         // Link-ul e de unica folosinta odata completat
         r.setCheckinTokenExpira(LocalDateTime.now(RO).minusSeconds(1));
         rezervareRepository.save(r);
+
+        final int nrPersoane = persoane.size();
+        new Thread(() -> pushService.trimiteTuturor(
+            "Fișă de cazare completată — " + r.getNume(),
+            nrPersoane + (nrPersoane == 1 ? " persoană" : " persoane") + " · "
+                + r.getDataCheckin() + " → " + r.getDataCheckout()
+        )).start();
 
         return ResponseEntity.ok(Map.of("ok", true));
     }
