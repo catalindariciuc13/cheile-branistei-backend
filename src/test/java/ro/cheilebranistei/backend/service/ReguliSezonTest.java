@@ -23,10 +23,10 @@ class ReguliSezonTest {
 
     @Test
     void sezoane() {
-        assertTrue(ReguliSezon.esteIarna(d(2026, 11, 30)));
-        assertFalse(ReguliSezon.esteIarna(d(2026, 11, 29)));
-        assertTrue(ReguliSezon.esteIarna(d(2027, 2, 28)));
-        assertFalse(ReguliSezon.esteIarna(d(2027, 3, 1)));
+        assertTrue(ReguliSezon.esteIarna(d(2026, 11, 1)));
+        assertFalse(ReguliSezon.esteIarna(d(2026, 10, 31)));
+        assertTrue(ReguliSezon.esteIarna(d(2027, 3, 31)));
+        assertFalse(ReguliSezon.esteIarna(d(2027, 4, 1)));
         assertTrue(ReguliSezon.esteCraciun(d(2026, 12, 23)));
         assertTrue(ReguliSezon.esteCraciun(d(2026, 12, 27)));
         assertFalse(ReguliSezon.esteCraciun(d(2026, 12, 28)));

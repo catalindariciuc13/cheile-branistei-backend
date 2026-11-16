@@ -12,7 +12,7 @@ import java.util.Map;
  * Regulile de rezervare pe sezoane. O „noapte” e identificată prin data în care începe
  * (noaptea de 24 decembrie = de pe 24 pe 25).
  *
- * - Iarna (30 noiembrie – sfârșitul lui februarie): se închiriază doar toată casa, minim 2 nopți.
+ * - Iarna (1 noiembrie – 31 martie): se închiriază doar toată casa, minim 2 nopți.
  *   O rezervare de iarnă ocupă toate camerele, iar o zi e liberă doar dacă e liberă toată casa.
  * - Crăciun (nopțile 23 – 27 decembrie): minim 3 nopți (pachetul de Crăciun).
  * - Nopți blocate (ex. Revelion deja rezervat): nu se pot rezerva de pe site.
@@ -39,10 +39,10 @@ public final class ReguliSezon {
         return d.getMonthValue() * 100 + d.getDayOfMonth();
     }
 
-    /** Iarna: 30 noiembrie – 28/29 februarie. */
+    /** Iarna: 1 noiembrie – 31 martie. */
     public static boolean esteIarna(LocalDate noapte) {
         int md = lunaZi(noapte);
-        return md >= 1130 || md <= 229;
+        return md >= 1101 || md <= 331;
     }
 
     /** Crăciun: nopțile 23 – 27 decembrie. */
@@ -102,7 +102,7 @@ public final class ReguliSezon {
     /** Regulile trimise site-ului, ca să afișeze prețurile și minimul de nopți în calendar. */
     public static Map<String, Object> pentruSite() {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("iarna", Map.of("start", "11-30", "sfarsit", "02-29"));
+        m.put("iarna", Map.of("start", "11-01", "sfarsit", "03-31"));
         m.put("craciun", Map.of("start", "12-23", "sfarsit", "12-27"));
         m.put("pretCamera", PRET_CAMERA);
         m.put("pretCasa", PRET_CASA);
