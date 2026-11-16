@@ -10,6 +10,7 @@ import ro.cheilebranistei.backend.repository.CheckinOaspeteRepository;
 import ro.cheilebranistei.backend.repository.RezervareRepository;
 import ro.cheilebranistei.backend.service.EmailService;
 import ro.cheilebranistei.backend.service.PushService;
+import ro.cheilebranistei.backend.service.ReguliSezon;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -103,6 +104,10 @@ public class RezervareController {
         if (!admin && nopti > 30) {
             return "Pentru sejururi mai lungi de 30 de nopți, contactează-ne direct.";
         }
+        if (!admin) {
+            String regula = ReguliSezon.verifica(r.getDataCheckin(), r.getDataCheckout());
+            if (regula != null) return regula;
+        }
 
         if (r.getNrPersoane() == null || r.getNrPersoane() < 1 || r.getNrPersoane() > 14) {
             return "Numărul de persoane trebuie să fie între 1 și 14.";
@@ -141,17 +146,27 @@ public class RezervareController {
             rezervare.setStatus(Rezervare.Status.PENDING);
         }
 
-        int camereNecesare = (int) Math.ceil(rezervare.getNrPersoane() / 2.0);
-        int camereOcupate  = rezervareRepository.getCamereOcupate(
-            rezervare.getDataCheckin(), rezervare.getDataCheckout()
-        );
-
-        if (camereOcupate + camereNecesare > 7) {
-            int camereLibere = 7 - camereOcupate;
-            String msg = camereLibere <= 0
-                ? "Ne pare rău, pensiunea este complet rezervată în perioada selectată."
-                : "Ne pare rău, nu avem suficiente camere. Putem caza maximum "
-                  + (camereLibere * 2) + " persoane în această perioadă.";
+        // Verificare noapte cu noapte: iarna o rezervare ocupă toată casa, altfel câte o cameră la 2 persoane
+        List<Rezervare> active = rezervareRepository
+            .findByStatusNotAndDataCheckinLessThanAndDataCheckoutGreaterThan(
+                Rezervare.Status.ANULATA, rezervare.getDataCheckout(), rezervare.getDataCheckin());
+        boolean lipsa = false, iarna = false;
+        int camereLibere = ReguliSezon.CAMERE;          // minimul de camere libere în nopțile din afara iernii
+        for (LocalDate z = rezervare.getDataCheckin(); z.isBefore(rezervare.getDataCheckout()); z = z.plusDays(1)) {
+            int libereNoapte = Math.max(0, ReguliSezon.CAMERE - ReguliSezon.ocupate(active, z));
+            if (libereNoapte < ReguliSezon.camere(rezervare, z)) {
+                lipsa = true;
+                iarna |= ReguliSezon.esteIarna(z);
+            }
+            if (!ReguliSezon.esteIarna(z)) camereLibere = Math.min(camereLibere, libereNoapte);
+        }
+        if (lipsa) {
+            String msg = iarna
+                ? "Ne pare rău, casa nu este liberă integral în perioada selectată. Iarna se închiriază doar toată casa."
+                : camereLibere <= 0
+                    ? "Ne pare rău, pensiunea este complet rezervată în perioada selectată."
+                    : "Ne pare rău, nu avem suficiente camere. Putem caza maximum "
+                      + (camereLibere * 2) + " persoane în această perioadă.";
             return ResponseEntity.badRequest().body(Map.of("eroare", msg));
         }
 
@@ -198,14 +213,26 @@ public class RezervareController {
         try {
             LocalDate ci = LocalDate.parse(checkin);
             LocalDate co = LocalDate.parse(checkout);
-            int ocupate  = rezervareRepository.getCamereOcupate(ci, co);
-            int libere   = Math.max(0, 7 - ocupate);
-            return ResponseEntity.ok(Map.of(
-                "camereOcupate", ocupate,
-                "camereLibere",  libere,
-                "persoaneMax",   libere * 2,
-                "disponibil",    libere > 0
-            ));
+            if (!co.isAfter(ci) || ChronoUnit.DAYS.between(ci, co) > 60) {
+                return ResponseEntity.badRequest().body(Map.of("eroare", "Date invalide."));
+            }
+            List<Rezervare> active = rezervareRepository
+                .findByStatusNotAndDataCheckinLessThanAndDataCheckoutGreaterThan(Rezervare.Status.ANULATA, co, ci);
+            int libere = ReguliSezon.CAMERE;
+            boolean casaIntreaga = false;
+            for (LocalDate z = ci; z.isBefore(co); z = z.plusDays(1)) {
+                libere = Math.min(libere, ReguliSezon.libere(active, z));
+                casaIntreaga |= ReguliSezon.esteIarna(z);
+            }
+            String regula = ReguliSezon.verifica(ci, co);
+            Map<String, Object> rasp = new java.util.LinkedHashMap<>();
+            rasp.put("camereOcupate", ReguliSezon.CAMERE - libere);
+            rasp.put("camereLibere",  libere);
+            rasp.put("persoaneMax",   libere * 2);
+            rasp.put("disponibil",    libere > 0 && regula == null);
+            rasp.put("casaIntreaga",  casaIntreaga);
+            if (regula != null) rasp.put("regula", regula);
+            return ResponseEntity.ok(rasp);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("eroare", "Date invalide."));
         }
@@ -229,22 +256,19 @@ public class RezervareController {
             .findByStatusNotAndDataCheckinLessThanAndDataCheckoutGreaterThan(
                 Rezervare.Status.ANULATA, sfarsit, inceput);
 
+        // Iarna o zi e „liberă” (7) doar dacă e liberă toată casa; nopțile blocate (Revelion) apar ocupate
         Map<String, Integer> libere = new java.util.LinkedHashMap<>();
         for (LocalDate zi = inceput; zi.isBefore(sfarsit); zi = zi.plusDays(1)) {
-            final LocalDate z = zi;
-            int ocupate = active.stream()
-                .filter(r -> !r.getDataCheckin().isAfter(z) && r.getDataCheckout().isAfter(z))
-                .mapToInt(r -> (int) Math.ceil(r.getNrPersoane() / 2.0))
-                .sum();
-            libere.put(z.toString(), Math.max(0, 7 - ocupate));
+            libere.put(zi.toString(), ReguliSezon.libere(active, zi));
         }
 
         return ResponseEntity.ok(Map.of(
             "start", inceput.toString(),
             "zile", zile,
-            "camereTotal", 7,
-            "pretCamera", 250,
-            "libere", libere
+            "camereTotal", ReguliSezon.CAMERE,
+            "pretCamera", ReguliSezon.PRET_CAMERA,
+            "libere", libere,
+            "reguli", ReguliSezon.pentruSite()
         ));
     }
 

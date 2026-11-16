@@ -124,7 +124,7 @@ public class RapoarteScheduler {
             final LocalDate z = zi;
             camereNopti += active.stream()
                 .filter(r -> !r.getDataCheckin().isAfter(z) && r.getDataCheckout().isAfter(z))
-                .mapToInt(r -> (int) Math.ceil(r.getNrPersoane() / 2.0))
+                .mapToInt(r -> ReguliSezon.camere(r, z))   // iarna: toată casa
                 .sum();
         }
         int ocupare = Math.min(100, Math.round(camereNopti * 100f / (7 * 7)));
